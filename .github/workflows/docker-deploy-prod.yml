@@ -1,6 +1,8 @@
 name: Deploy Production
-on: [push]
-
+on: 
+  push:
+    tags:
+      - v*.*.*
 jobs:
     deploy-production:
         runs-on: ubuntu-latest
