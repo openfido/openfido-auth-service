@@ -1,8 +1,5 @@
 name: Deploy Production
-on: 
-  push:
-    tags:
-      - v*.*.*
+on: [push]
 
 jobs:
     deploy-production:
@@ -55,8 +52,8 @@ jobs:
             id: build-image
             env:
               ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-              ECR_REPOSITORY: openfido/prod-app
-              IMAGE_TAG: latest
+              ECR_REPOSITORY: openfido/prod-auth
+              IMAGE_TAG: master
             run: |
               eval $(ssh-agent)
               ssh-add ~/.ssh/id_rsa
@@ -69,20 +66,20 @@ jobs:
           # can also use the CLI to manually generate the task 
           - name: Download task definition
             run: |
-              aws ecs describe-task-definition --task-definition openfido-prod-app-task --query taskDefinition > task-definition.json
+              aws ecs describe-task-definition --task-definition openfido-prod-auth-task --query taskDefinition > task-definition.json
 
           - name: Fill in the new image ID in the Amazon ECS task definition
             id: task-def
             uses: aws-actions/amazon-ecs-render-task-definition@v1
             with:
               task-definition: task-definition.json
-              container-name: 'openfido-prod-app-task'
+              container-name: 'openfido-prod-auth-task'
               image: ${{ steps.build-image.outputs.image }}
 
           - name: Deploy Amazon ECS task definition
             uses: aws-actions/amazon-ecs-deploy-task-definition@v1
             with:
               task-definition: ${{ steps.task-def.outputs.task-definition }}
-              service: 'openfido-prod-app-service'
+              service: 'openfido-prod-auth-service'
               cluster: 'openfido-prod-ecs-cluster'
               wait-for-service-stability: true

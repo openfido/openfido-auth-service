@@ -1,8 +1,5 @@
 name: Deploy Staging
-on: 
-  push:
-    branches:
-      - master
+on: [push]
 jobs:
     build:
         runs-on: ubuntu-latest
@@ -49,7 +46,7 @@ jobs:
           - name: Build
             run: |
               mkdir test-results
-              pipenv run invoke test --junit --enforce-percent 97
+              pipenv run invoke test --junit --enforce-percent 92
 
           - name: Store test results as artifacts
             uses: actions/upload-artifact@v2
@@ -114,7 +111,7 @@ jobs:
             id: build-image
             env:
               ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-              ECR_REPOSITORY: openfido/stage-app
+              ECR_REPOSITORY: openfido/stage-auth
               IMAGE_TAG: master
             run: |
               eval $(ssh-agent)
@@ -128,20 +125,20 @@ jobs:
           # can also use the CLI to manually generate the task 
           - name: Download task definition
             run: |
-              aws ecs describe-task-definition --task-definition openfido-stage-app-task --query taskDefinition > task-definition.json
+              aws ecs describe-task-definition --task-definition openfido-stage-auth-task --query taskDefinition > task-definition.json
 
           - name: Fill in the new image ID in the Amazon ECS task definition
             id: task-def
             uses: aws-actions/amazon-ecs-render-task-definition@v1
             with:
               task-definition: task-definition.json
-              container-name: 'openfido-stage-app-task'
+              container-name: 'openfido-stage-auth-task'
               image: ${{ steps.build-image.outputs.image }}
 
           - name: Deploy Amazon ECS task definition
             uses: aws-actions/amazon-ecs-deploy-task-definition@v1
             with:
               task-definition: ${{ steps.task-def.outputs.task-definition }}
-              service: 'openfido-stage-app-service'
+              service: 'openfido-stage-auth-service'
               cluster: 'openfido-stage-ecs-cluster'
               wait-for-service-stability: true
