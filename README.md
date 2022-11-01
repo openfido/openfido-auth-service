@@ -95,8 +95,8 @@ To run tests, use [invoke](https://pyinvoke.org):
     docker-compose run --rm auth-service invoke test --cov-report && open htmlcov/index.html
 
     # Or if you'd rather run locally
-    pipenv install
-    pipenv run invoke test
+    python3 -m pip install -r requirements.txt
+    python3 -m invoke test
 
     # to run a lint test
     docker-compose run --rm auth-service invoke lint
